@@ -3,7 +3,7 @@ const jwt = require("jsonwebtoken");
 const bcrypt = require("bcrypt");
 
 const registerUser = async (req, res) => {
-  const { username, email, password } = req.body;
+  const { username, email, password, role = "user" } = req.body;
 
   const isUserAlreadyRegistered = await userModel.findOne({
     $or: [{ username }, { email }],
@@ -18,12 +18,17 @@ const registerUser = async (req, res) => {
   const user = await userModel.create({
     username,
     email,
+    role,
     password: hashedPassword,
   });
 
-  const token = jwt.sign({ id: user._id }, process.env.JWT_SECRET, {
-    expiresIn: "1d",
-  });
+  const token = jwt.sign(
+    { id: user._id, role: user.role },
+    process.env.JWT_SECRET,
+    {
+      expiresIn: "1d",
+    },
+  );
 
   res.cookie("token", token, {
     httpOnly: true,
@@ -33,23 +38,29 @@ const registerUser = async (req, res) => {
 };
 
 const loginUser = async (req, res) => {
-  const { email, password } = req.body;
+  const { identifier, password } = req.body;
 
-  const user = await userModel.findOne({ email });
+  const user = await userModel.findOne({
+    $or: [{ username: identifier }, { email: identifier }],
+  });
 
   if (!user) {
-    return res.status(401).json({ message: "User not found" });
+    return res.status(401).json({ message: "Invalid credentials" });
   }
 
   const isPasswordValid = await bcrypt.compare(password, user.password);
 
   if (!isPasswordValid) {
-    return res.status(401).json({ message: "Invalid password" });
+    return res.status(401).json({ message: "Invalid credentials" });
   }
 
-  const token = jwt.sign({ id: user._id }, process.env.JWT_SECRET, {
-    expiresIn: "1d",
-  });
+  const token = jwt.sign(
+    { id: user._id, role: user.role },
+    process.env.JWT_SECRET,
+    {
+      expiresIn: "1d",
+    },
+  );
 
   res.cookie("token", token, {
     httpOnly: true,
