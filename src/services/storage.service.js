@@ -10,7 +10,7 @@ const uploadFile = async (buffer) => {
   try {
     const result = await imageKit.files.upload({
       file: buffer.toString("base64"),
-      fileName: "profile-image.jpg",
+      fileName: "Musics",
     });
 
     return result;
