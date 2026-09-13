@@ -53,4 +53,37 @@ async function createMusic(req, res) {
   }
 }
 
-module.exports = { createMusic };
+async function getAllMusics(req, res) {
+  try {
+    const token = req.cookies.token;
+
+    if (!token) {
+      return res.status(401).json({
+        message: "Unauthorized",
+      });
+    }
+
+    const decoded = jwt.verify(token, process.env.JWT_SECRET);
+
+    if (!["artist", "user"].includes(decoded.role)) {
+      return res.status(403).json({
+        message: "You do not have permission",
+      });
+    }
+
+    const musics = await musicModel.find().populate("artist", "username");
+
+    return res.status(200).json({
+      message: "Musics fetched successfully",
+      musics,
+    });
+  } catch (error) {
+    console.log(error);
+
+    return res.status(500).json({
+      message: "Failed to fetch musics",
+    });
+  }
+}
+
+module.exports = { createMusic, getAllMusics };

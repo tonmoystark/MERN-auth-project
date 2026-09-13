@@ -3,7 +3,6 @@ const cors = require("cors");
 const express = require("express");
 const authRouter = require("./routes/auth.routes");
 const musicRouter = require("./routes/music.routes");
-const multer = require("multer");
 const app = express();
 
 app.use(express.json());
